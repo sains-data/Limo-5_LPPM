@@ -50,12 +50,31 @@ Dataset Name: Log Akses & Pencarian Total Records: ~100,000 baris Attributes: lo
 ## 3. Data Source Mapping (ETL Flow)
 
 graph LR
-    A[Access_Log] --> E[Staging Area]
-    B[Search_Query_Log] --> E
-    C[Dataset_Metadata] --> E
-    D[User_Registry] --> E
-    E --> F[Data Warehouse]
-    F --> G[Analytical Views]
+    subgraph Sources
+    A[SIPPM DB] 
+    B[Sistem KKN] 
+    C[SINTA API] 
+    D[Server Logs] 
+    end
+
+    subgraph ETL_Process
+    E[Staging Area] 
+    end
+
+    subgraph Data_Warehouse
+    F[Data Warehouse LPPM] 
+    end
+
+    subgraph Visualization
+    G[Power BI Dashboard] 
+    end
+
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    E --> F
+    F --> G
 
 Extract:
 
