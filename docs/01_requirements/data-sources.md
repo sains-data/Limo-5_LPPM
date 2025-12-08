@@ -47,34 +47,22 @@ Dataset Name: Log Akses & Pencarian Total Records: ~100,000 baris Attributes: lo
 
 ---
 
+**Data Quality Assessment**:
+- Completeness: 100% (System generated)
+- Volume: Tinggi (Perlu partisi)
+
+---
+
 ## 3. Data Source Mapping (ETL Flow)
 
+```mermaid
 graph LR
-    subgraph Sources
-    A[SIPPM DB] 
-    B[Sistem KKN] 
-    C[SINTA API] 
-    D[Server Logs] 
-    end
-
-    subgraph ETL_Process
-    E[Staging Area] 
-    end
-
-    subgraph Data_Warehouse
-    F[Data Warehouse LPPM] 
-    end
-
-    subgraph Visualization
-    G[Power BI Dashboard] 
-    end
-
-    A --> E
-    B --> E
-    C --> E
-    D --> E
-    E --> F
-    F --> G
+    A[SIPPM DB] --> E[Staging Area]
+    B[Sistem KKN] --> E
+    C[SINTA API] --> E
+    D[Server Logs] --> E
+    E --> F[Data Warehouse LPPM]
+    F --> G[Power BI Dashboard]
 
 Extract:
 
