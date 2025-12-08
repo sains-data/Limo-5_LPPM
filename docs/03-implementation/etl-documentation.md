@@ -68,3 +68,4 @@ graph LR
     C --> D
     D -->|Transform & Cleanse| E
     D -->|Aggregasi & Load| F
+```
