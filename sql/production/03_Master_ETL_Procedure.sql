@@ -1,16 +1,14 @@
 /*
 ===========================================================================
-TAHAP 2: PROSES ETL & DATA GENERATION (50.000 DATA)
-KELOMPOK 5 - LPPM ITERA
-Deskripsi: Mengisi data dimensi dan fakta dengan logika yang sudah diperbaiki.
+FILE: 03_Master_ETL_Procedure.sql
+DESKRIPSI: Stored Procedure Utama untuk Generate & Load Data
+DATABASE: DW_LPPM
 ===========================================================================
 */
 
 USE DW_LPPM;
 GO
 SET NOCOUNT ON;
-
-PRINT '>>> MEMULAI ETL ... (Estimasi: 1-2 Menit)';
 
 -- =======================================================
 -- 1. POPULATE STATIC DIMENSIONS (Data Asli)
