@@ -63,41 +63,37 @@ graph LR
     E --> F[Data Warehouse LPPM]
     F --> G[Power BI Dashboard]
 ```
-Extract:
+### **Extract**
+* **SIPPM:** Full extract untuk data master, Incremental untuk data transaksi harian.
+* **Log Server:** Stream processing atau batch tiap malam.
+* **SINTA:** Scheduled API call setiap akhir bulan.
 
-SIPPM: Full extract untuk data master, Incremental untuk data transaksi harian.
+### **Transform**
+* **Standardisasi Nama:** Membersihkan gelar dosen (Prof., Dr.) agar seragam.
+* **Konversi Tanggal:** Mengubah format timestamp menjadi DateKey (YYYYMMDD).
+* **Kalkulasi:** Menghitung `Lama_Review_Hari` (Tgl Keputusan - Tgl Ajuan).
+* **Data Masking:** Menyensor NIDN/NIM untuk user publik.
 
-Log Server: Stream processing atau batch tiap malam.
+### **Load**
+* **Fact Table:** Insert data transaksi baru.
+* **Dimension Table:** Update data master (SCD Type 2 untuk perubahan jabatan dosen).
 
-SINTA: Scheduled API call setiap akhir bulan.
+---
 
-Transform:
+## 4. Integration Architecture
 
-Standardisasi Nama: Membersihkan gelar dosen (Prof., Dr.) agar seragam.
+### **Batch Integration (Utama)**
+* **Schedule:** Harian jam 02:00 WIB (Traffic rendah).
+* **Tool:** SQL Server Stored Procedure (`usp_Master_ETL`) dipanggil oleh SQL Agent Job.
+* **Failover:** Retry otomatis 3x jika gagal.
 
-Konversi Tanggal: Mengubah format timestamp menjadi DateKey (YYYYMMDD).
+---
 
-Kalkulasi: Menghitung Lama_Review_Hari (Tgl Keputusan - Tgl Ajuan).
+## 5. Security & Governance
 
-Data Masking: Menyensor NIDN/NIM untuk user publik.
-
-Load:
-
-Fact Table: Insert data transaksi baru.
-
-Dimension Table: Update data master (SCD Type 2 untuk perubahan jabatan dosen).
-
-4. Integration Architecture
-Batch Integration (Utama)
-Schedule: Harian jam 02:00 WIB (Traffic rendah).
-
-Tool: SQL Server Stored Procedure (usp_Master_ETL) dipanggil oleh SQL Agent Job.
-
-Failover: Retry otomatis 3x jika gagal.
-
-Security & Governance
-Access Control: Hanya User 'Analyst' yang boleh akses data mentah di Staging.
-
-Audit Trail: Mencatat setiap perubahan pada tabel Fact_Proposal (Insert/Update/Delete).
-
-Backup: Full Backup mingguan, Diff harian, Log per 6 jam.
+* **Access Control:** Hanya User 'Analyst' yang boleh akses data mentah di Staging.
+* **Audit Trail:** Mencatat setiap perubahan pada tabel `Fact_Proposal` (Insert/Update/Delete).
+* **Backup:**
+    * Full Backup: Mingguan
+    * Diff Backup: Harian
+    * Log Backup: Per 6 jam
