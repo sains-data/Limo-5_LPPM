@@ -45,7 +45,7 @@ Proses ETL (Extract, Transform, Load) ini bertujuan untuk mengintegrasikan data 
 ## 3. Arsitektur ETL
 
 ### 3.1 Diagram Arsitektur
-
+```mermaid
 graph LR
     subgraph Sources
     A[SIPPM DB] 
@@ -67,82 +67,71 @@ graph LR
     C --> D
     D --> E
     D --> F
+```
+## 3.2 Teknologi
+* **Database:** SQL Server 2019
+* **ETL Tool:** T-SQL Stored Procedures (`usp_Master_ETL`)
+* **Orchestration:** SQL Server Agent Jobs
 
-3.2 Teknologi
-Database: SQL Server 2019
+---
 
-ETL Tool: T-SQL Stored Procedures (usp_Master_ETL)
+## 4. Alur Data (Data Flow)
 
-Orchestration: SQL Server Agent Jobs
+### **Persiapan (Pre-ETL)**
+* Membersihkan tabel Staging (`TRUNCATE`).
+* Memastikan tidak ada koneksi yang terkunci.
 
-4. Alur Data (Data Flow)
-Persiapan (Pre-ETL): - Membersihkan tabel Staging (TRUNCATE).
+### **Ekstraksi (Extract)**
+* Mengambil data transaksi baru dari SIPPM ke `stg.Proposal`.
+* Mengambil log aktivitas ke `stg.System_Logs`.
 
-Memastikan tidak ada koneksi yang terkunci.
+### **Transformasi (Transform)**
+* **Data Cleaning:** Menghapus spasi berlebih pada nama dosen.
+* **Standardisasi:** Mengubah format tanggal menjadi `DateKey` (YYYYMMDD).
+* **Business Logic:** Menghitung `Lama_Review_Hari` (Tgl Keputusan - Tgl Ajuan).
+* **Handling Null:** Mengisi nilai kosong pada `Dana_Disetujui` dengan 0 jika status ditolak.
 
-Ekstraksi (Extract): - Mengambil data transaksi baru dari SIPPM ke stg.Proposal.
+### **Muat Dimensi (Load Dimension)**
+* Update `Dim_Peneliti` (SCD Type 2) jika ada perubahan jabatan.
+* Insert data baru ke `Dim_Publikasi`.
 
-Mengambil log aktivitas ke stg.System_Logs.
+### **Muat Fakta (Load Fact)**
+* Load `Fact_Proposal` dengan referensi key yang valid.
+* Load `Fact_KKN` dan `Fact_Authorship`.
+* Load `Fact_Pencarian_Log` untuk analisis sistem.
 
-Transformasi (Transform):
+---
 
-Data Cleaning: Menghapus spasi berlebih pada nama dosen.
+## 5. Aturan Transformasi (Transformation Rules)
 
-Standardisasi: Mengubah format tanggal menjadi DateKey (YYYYMMDD).
+### **5.1 Dim_Peneliti (SCD Type 2)**
+* **Logika:** Jika dosen naik jabatan (misal: Lektor ke Lektor Kepala), record lama dinonaktifkan (`IsCurrent = 0`) dan record baru dibuat (`IsCurrent = 1`).
+* **Tujuan:** Melacak riwayat produktivitas dosen pada setiap jenjang jabatan.
 
-Business Logic: Menghitung Lama_Review_Hari (Tgl Keputusan - Tgl Ajuan).
+### **5.2 Fact_Proposal (Logika Bisnis)**
+* **Dana Disetujui:**
+    * Jika Status = 'Diterima', `Dana Disetujui` = 80-100% Dana Ajuan.
+    * Jika Status = 'Ditolak', `Dana Disetujui` = 0.
+* **Tanggal Keputusan:**
+    * Harus lebih besar atau sama dengan Tanggal Pengajuan (Validasi Logika).
 
-Handling Null: Mengisi nilai kosong pada Dana_Disetujui dengan 0 jika status ditolak.
+---
 
-Muat Dimensi (Load Dimension):
+## 6. Prosedur ETL Utama
 
-Update Dim_Peneliti (SCD Type 2) jika ada perubahan jabatan.
+### **6.1 Master Procedure**
+* **`dbo.usp_Master_ETL`**: Prosedur utama yang dipanggil oleh SQL Agent. Mengatur urutan eksekusi:
+    1.  Populate Dimensions
+    2.  Populate Facts
+    3.  Update Statistics
 
-Insert data baru ke Dim_Publikasi.
-
-Muat Fakta (Load Fact):
-
-Load Fact_Proposal dengan referensi key yang valid.
-
-Load Fact_KKN dan Fact_Authorship.
-
-Load Fact_Pencarian_Log untuk analisis sistem.
-
-5. Aturan Transformasi (Transformation Rules)
-5.1 Dim_Peneliti (SCD Type 2)
-Logika: Jika dosen naik jabatan (misal: Lektor ke Lektor Kepala), record lama dinonaktifkan (IsCurrent = 0) dan record baru dibuat (IsCurrent = 1).
-
-Tujuan: Melacak riwayat produktivitas dosen pada setiap jenjang jabatan.
-
-5.2 Fact_Proposal (Logika Bisnis)
-Dana Disetujui:
-
-Jika Status = 'Diterima', Dana Disetujui = 80-100% Dana Ajuan.
-
-Jika Status = 'Ditolak', Dana Disetujui = 0.
-
-Tanggal Keputusan:
-
-Harus lebih besar atau sama dengan Tanggal Pengajuan (Validasi Logika).
-
-6. Prosedur ETL Utama
-6.1 Master Procedure
-dbo.usp_Master_ETL: Prosedur utama yang dipanggil oleh SQL Agent. Mengatur urutan eksekusi:
-
-Populate Dimensions
-
-Populate Facts
-
-Update Statistics
-
-6.2 Validasi Data (QA Checks)
+### **6.2 Validasi Data (QA Checks)**
 Script validasi dijalankan setelah ETL selesai:
+* Memastikan tidak ada `PenelitiKey` yang `NULL` (Orphan Data).
+* Memastikan Total Data Proposal sesuai target (misal > 50.000 rows).
 
-Memastikan tidak ada PenelitiKey yang NULL (Orphan Data).
+---
 
-Memastikan Total Data Proposal sesuai target (misal > 50.000 rows).
-
-7. Penanganan Error
-Transaction Management: Menggunakan BEGIN TRY...COMMIT/ROLLBACK dalam Stored Procedure untuk mencegah data parsial masuk jika terjadi error.
-
-Logging: Kesalahan dicatat dalam tabel sistem SQL Server atau log agent.
+## 7. Penanganan Error
+* **Transaction Management:** Menggunakan `BEGIN TRY...COMMIT/ROLLBACK` dalam Stored Procedure untuk mencegah data parsial masuk jika terjadi error.
+* **Logging:** Kesalahan dicatat dalam tabel sistem SQL Server atau log agent.
