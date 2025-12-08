@@ -49,15 +49,14 @@ Dataset Name: Log Akses & Pencarian Total Records: ~100,000 baris Attributes: lo
 
 ## 3. Data Source Mapping (ETL Flow)
 
-
 graph LR
-    A[SIPPM DB] --> E[Staging Area]
-    B[Sistem KKN] --> E
-    C[SINTA API] --> E
-    D[Server Logs] --> E
-    E --> F[Data Warehouse LPPM]
-    F --> G[Power BI Dashboard]
-ETL Process Strategy
+    A[Access_Log] --> E[Staging Area]
+    B[Search_Query_Log] --> E
+    C[Dataset_Metadata] --> E
+    D[User_Registry] --> E
+    E --> F[Data Warehouse]
+    F --> G[Analytical Views]
+
 Extract:
 
 SIPPM: Full extract untuk data master, Incremental untuk data transaksi harian.
