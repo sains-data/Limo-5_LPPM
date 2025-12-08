@@ -46,29 +46,27 @@ Proses ETL (Extract, Transform, Load) ini bertujuan untuk mengintegrasikan data 
 
 ### 3.1 Diagram Arsitektur
 
-```mermaid
 graph LR
     subgraph Sources
-    A[SIPPM DB]
-    B[Sistem KKN]
+    A[SIPPM DB] 
+    B[Sistem KKN] 
     C[Server Logs]
     end
 
     subgraph Staging
-    D[Staging Schema (stg)]
+    D[Staging Schema] 
     end
 
     subgraph DataWarehouse
-    E[Dimensi (dbo)]
-    F[Fakta (dbo)]
+    E[Dimensi] 
+    F[Fakta] 
     end
 
     A --> D
     B --> D
     C --> D
-    D -->|Transform & Cleanse| E
-    D -->|Aggregasi & Load| F
-```
+    D --> E
+    D --> F
 
 3.2 Teknologi
 Database: SQL Server 2019
